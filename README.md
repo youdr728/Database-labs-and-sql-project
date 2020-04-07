@@ -12,7 +12,7 @@ Please find the instructions for these assignments on the course Website.
 
 **Assignments that are handed in incorrectly will be rejected and your assistant will ask you to correct the assignment.** 
 
-We want you to manage your solutions to the lab assignments in a gitlab repository; that repository should be a *private* fork of the repository [olaha93/db](https://gitlab.ida.liu.se/olaha93/db). A fork is essentially a copy of the repository that goes under your own account.
+We want you to manage your solutions to the lab assignments in a gitlab repository; that repository should be a *private* fork of the repository [olaha93/db](https://gitlab.liu.se/olaha93/db). A fork is essentially a copy of the repository that goes under your own account.
 
 In the following, we describe the process of i) creating such a forked repository and ii) handing in your solutions via that repository.
 
