@@ -88,8 +88,8 @@ If there is no such file in the directory (e.g., lab4), you may upload files fro
 > <img src="/clarifying_pictures/upload.png"  width="500">
 ---
 
-### 6. Submit by sending an email with a link to your repository
-To submit an assignment, *email an address of your repository* to your lab assistant. The subject of the email letter *must* adhere to the following pattern: 
+### 6. Submit/Re-submit by sending an email with a link to your repository
+To submit/resubmit an assignment, *email an address of your repository* to your lab assistant. The subject of the email letter *must* adhere to the following pattern: 
 * **"CourseCode_GroupNr_userName1_userName2_labNumber"** 
 * (e.g., TDDD37_A1_hrsdv94_dgjjtd92_lab2).
 
