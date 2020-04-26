@@ -89,12 +89,11 @@ If there is no such file in the directory (e.g., lab4), you may upload files fro
 ---
 
 ### 6. Submit/Re-submit by sending an email with a link to your repository
-To submit/resubmit an assignment, *email an address of your repository* to your lab assistant. The subject of the email letter *must* adhere to the following pattern: 
+To submit/resubmit an assignment, **email the address of your repository** to your lab assistant. The subject of the email letter *must* adhere to the following pattern: 
 * **"CourseCode_GroupNr_userName1_userName2_labNumber"** 
 * (e.g., TDDD37_A1_hrsdv94_dgjjtd92_lab2).
 
 > <img src="/clarifying_pictures/email.png"  width="500"> 
-To submit your solution for a lab assignment, email a link of your repository to your lab assistant; the subject for that email should adhere to the following pattern: **"CourseCode_GroupNr_userName1_userName2_labNumber"** (e.g., TDDD37_A1_hrsdv94_dgjjtd92_lab2). 
 
 **Assignments do not need to be demonstrated during lab sessions**.
 
