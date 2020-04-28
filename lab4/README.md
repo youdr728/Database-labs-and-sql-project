@@ -1,6 +1,6 @@
 # Lab 4 
 
-Lab 4 is a big project consisting of three parts. 
+Lab 4 is a big project consisting of four parts. 
 
 ## Lab 4 Part A
 For the first part submit:
