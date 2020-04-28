@@ -18,6 +18,10 @@ Alice Alicesson abcde236, Bob Bobsson qweqwe335`
 Draw your diagrams using [draw.io](https://draw.io) and **export clean final diagrams as PDFs**.
 
 ## Lab 4 Part B
+Discuss your design at the mandatory teaching session. 
+Fix the design and submit it as part B. Part C requires Part B being approved.
+
+## Lab 4 Part C
 This is the coding phase of the project. **Do not start coding until your EER and RM is approved!**
 
 When you make sure that all test scripts could output expected result on your project, the following should be handed in: 
@@ -66,7 +70,7 @@ Common errors are rounding errors and route errors
 #### Issues
 You will most likely run into problems during the coding phase! Create issues, tag your lab assistant and reference where in the code you are having problems! 
 
-## Lab 4 Part C
+## Lab 4 Part D
 Send in the code to Urkund. Change the file ending from lab4.sql to lab4.txt! Send it to Urkund when you have passed lab4c) on WebReg! Details are on course website.
 
 
