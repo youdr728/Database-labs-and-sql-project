@@ -28,7 +28,7 @@ When you make sure that all test scripts could output expected result on your pr
 
 * EER-diagram as .pdf
 * Relational Model as .pdf
-* Functional dependencies for all relations as .txt or .pdf
+<!--* Functional dependencies for all relations as .txt or .pdf-->
 * Project code as one file named lab4.sql, which should be executable directly without any error
 * Answers to the non code questions as SQL-comments in the lab4.sql file, place them at the end of the file
 * An identified secondary index as SQL-comments in the lab4.sql file (do not implement it), place at the end of the file
