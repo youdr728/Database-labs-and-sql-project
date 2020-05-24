@@ -14,3 +14,5 @@ This folder contains an initial `template.drawio` template with the examples of 
 2. Open it using [draw.io](https://www.draw.io)
 3. Follow the instructions from the template and implement the assignment
 4. Save the `template.drawio` and export the final `lab2.pdf` diagram as a PDF file
+5. Place the files in this folder
+5. Submit as described in the [README](https://gitlab.liu.se/olaha93/db/-/blob/master/README.md)
