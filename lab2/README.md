@@ -1,23 +1,16 @@
 # Lab 2
-Your report should contain the following three files:
+Your report must contain the following two files:
 
-* A PDF file with the EER diagram (task 1)
-* A txt file (or a PDF file) with notes regarding the additional choices and
-assumptions you have made when creating your EER diagram
-* A PDF file with the Relational Model (task 2)
+* `template.drawio` with the source of the diagrams
+* `lab2.pdf` file with the EER and RM diagrams, created from a drawio template **as a PDF document**
 
-Place these three files into the gitlab folder.
+
+Place these files into this gitlab folder.
 
 ## Drawing diagrams
-This folder contains **XML files** with EER and RM diagrams compatible with [draw.io](https://www.draw.io).
+This folder contains an initial `template.drawio` template with the examples of EER and RM diagrams. 
 
-Open the files using [draw.io](https://www.draw.io), make your changes and **export clean final diagrams as PDF files**.
-
-<!-- If downloading it doesn't work to the following: 
-
-1. go to draw.io website, press create new diagram
-2. draw your ER diagram using the shapes in the drop-down menu 'Entity relation'
-3. name the file ER.xml and save it where you want -->
-
-## Text file
-Clearly explain your choices and assumptions in a text file.
+1. Download `template.drawio` file
+2. Open it using [draw.io](https://www.draw.io)
+3. Follow the instructions from the template and implement the assignment
+4. Save the `template.drawio` and export the final `lab2.pdf` diagram as a PDF file
