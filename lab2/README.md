@@ -1,18 +1,19 @@
-# Lab 2
-Your report must contain the following two files:
-
-* `template.drawio` with the source of the diagrams
-* `lab2.pdf` file with the EER and RM diagrams, created from a drawio template **as a PDF document**
+# Lab 1
+Name the file lab1.sql
 
 
-Place these files into this gitlab folder.
+## Getting started
+see: https://www.ida.liu.se/~TDDD37/labs/mysqllabs/index.en.shtml
 
-## Drawing diagrams
-This folder contains an initial `template.drawio` template with the examples of EER and RM diagrams. 
 
-1. Download `template.drawio` file
-2. Open it using [draw.io](https://www.draw.io)
-3. Follow the instructions from the template and implement the assignment
-4. Save the `template.drawio` and export the final `lab2.pdf` diagram as a PDF file
-5. Place the files in this folder
-5. Submit as described in the [README](https://gitlab.liu.se/olaha93/db/-/blob/master/README.md)
+## The lab report
+* See the example **lab1.sql** file for the report structure
+
+* The questions should be answered in chronological order. 
+r
+* The file should be able to run using `SOURCE lab1.sql;` in MySQL without error.
+
+* All created tables and views should be deleted in the beginning of the file.
+
+* The written questions should be within SQL-comments. 
+"/* like this */ "
