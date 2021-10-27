@@ -3,8 +3,8 @@ Welcome to the Database Technology course!
 
 This course has 4 lab assignments:
 
-* Lab 1 introduces SQL
-* Lab 2 introduces database design
+* Lab 1 introduces database design
+* Lab 2 introduces SQL
 * Lab 3 is about functional dependencies and normalization
 * Lab 4 is a bigger project in which you will create a database for a hypothetical airline company
 
@@ -78,7 +78,7 @@ After you have the content of your repository on your computer, you can start wo
 
 After completing an assignment, edit/upload the files to your GitLab repository so that your lab assistant can check your work online.
 
-If there exists an example report in the directory (e.g., lab1.sql in the directory lab1) – open and edit the file in the browser as illustrated in the following screenshot (of course, you may also use git to push updates to this file from your computer).
+If there exists an example report in the directory (e.g., lab2.sql in the directory lab2) – open and edit the file in the browser as illustrated in the following screenshot (of course, you may also use git to push updates to this file from your computer).
 
 > <img src="/clarifying_pictures/edit.png"  width="500">
 ---
