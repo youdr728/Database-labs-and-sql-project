@@ -1,5 +1,5 @@
 /*
-Lab 1 report <Student_names and liu_id>
+Lab 2 report <Student_names and liu_id>
 */
 
 /* All non code should be within SQL-comments like this */ 
