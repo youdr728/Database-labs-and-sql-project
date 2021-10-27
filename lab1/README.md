@@ -1,4 +1,4 @@
-# Lab 2
+# Assignment 1 (Database design and EER modeling)
 Your report must contain the following two files:
 
 * `template.drawio` with the source of the diagrams
