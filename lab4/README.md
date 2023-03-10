@@ -1,21 +1,23 @@
 # Lab 4 
 
-Lab 4 is a big project consisting of four parts. 
+Lab 4 is a slightly bigger project consisting of four parts. 
 
 ## Lab 4 Part A
-Your report must contain the following *two* files:
+Your report must contain the following file:
 
-* `template.drawio` with the source of the diagrams
-* `lab4A.pdf` file with the EER and RM diagrams, created from the drawio template **as a PDF document**
+* `lab4A.pdf` file with the EER and RM diagrams, **as a PDF document**
 
-Place these files into this gitlab folder.
+Place this file into this gitlab folder.
 
 ### Drawing diagrams
-1. Use `template.drawio` file from [Lab2](https://gitlab.liu.se/olaha93/db/-/tree/master/lab2)
+
+You may use [draw.io](https://www.draw.io) to create the diagrams (but you do not have to). If you want to use it, the relevant steps are as follows.
+
+1. Use `template.drawio` file from [Lab1](https://gitlab.liu.se/olaha93/db/-/tree/master/lab1)
 2. Open it using [draw.io](https://www.draw.io)
 3. Follow the instructions from the template and implement the assignment
 4. Save the `template.drawio` and export the final `lab4A.pdf` diagram as a PDF file
-5. Place the files in this folder
+5. Place this PDF file in this folder
 5. Submit as described in the [README](https://gitlab.liu.se/olaha93/db/-/blob/master/README.md)
 
 ## Lab 4 Part B
