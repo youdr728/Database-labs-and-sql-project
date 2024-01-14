@@ -37,23 +37,6 @@ CREATE TABLE route (
         FOREIGN KEY (from_airport) REFERENCES airport(code) ON DELETE CASCADE
 );
 
-CREATE TABLE weekly_schedule (
-    id INT AUTO_INCREMENT,
-    day_of_week VARCHAR(10),
-    departue TIME,
-    route_id INT,
-    year_nr INT,
-
-    CONSTRAINT pk_weekly_schedule
-        PRIMARY KEY (id),
-    CONSTRAINT fk_day_schedule
-        FOREIGN KEY (day_of_week) REFERENCES day(weekday) ON DELETE CASCADE,
-    CONSTRAINT fk_route_schedule
-        FOREIGN KEY (route_id) REFERENCES route(id) ON DELETE CASCADE,
-    CONSTRAINT fk_year_schedule
-        FOREIGN KEY (year_nr) REFERENCES year(nr) ON DELETE CASCADE
-);
-
 CREATE TABLE year (
     nr INT,
     factor DOUBLE,
@@ -70,6 +53,23 @@ CREATE TABLE day (
     CONSTRAINT pk_day
         PRIMARY KEY (weekday),
     CONSTRAINT fk_year_day
+        FOREIGN KEY (year_nr) REFERENCES year(nr) ON DELETE CASCADE
+);
+
+CREATE TABLE weekly_schedule (
+    id INT AUTO_INCREMENT,
+    day_of_week VARCHAR(10),
+    departue TIME,
+    route_id INT,
+    year_nr INT,
+
+    CONSTRAINT pk_weekly_schedule
+        PRIMARY KEY (id),
+    CONSTRAINT fk_day_schedule
+        FOREIGN KEY (day_of_week) REFERENCES day(weekday) ON DELETE CASCADE,
+    CONSTRAINT fk_route_schedule
+        FOREIGN KEY (route_id) REFERENCES route(id) ON DELETE CASCADE,
+    CONSTRAINT fk_year_schedule
         FOREIGN KEY (year_nr) REFERENCES year(nr) ON DELETE CASCADE
 );
 
@@ -97,8 +97,16 @@ CREATE TABLE flight (
         FOREIGN KEY (weekly_flight) REFERENCES weekly_schedule(id) ON DELETE CASCADE
 );
 
+CREATE TABLE passenger (
+    passport_nr INT,
+    name VARCHAR(30),
+
+    CONSTRAINT pk_passenger
+        PRIMARY KEY (passport_nr)
+);
+
 CREATE TABLE reservation (
-    id INT AUTO_INCREMENT,
+    id INT,
     flight_nr INT,
     passenger INT,
     seat_amount INT,
@@ -109,14 +117,6 @@ CREATE TABLE reservation (
         FOREIGN KEY (flight_nr) REFERENCES flight(id) ON DELETE CASCADE,
     CONSTRAINT fk_passenger_reservation
         FOREIGN KEY (passenger) REFERENCES passenger(passport_nr) ON DELETE CASCADE
-);
-
-CREATE TABLE passenger (
-    passport_nr INT,
-    name VARCHAR(30),
-
-    CONSTRAINT pk_passenger
-        PRIMARY KEY (passport_nr)
 );
 
 CREATE TABLE ticket (
@@ -130,6 +130,14 @@ CREATE TABLE ticket (
         FOREIGN KEY (reservation_id) REFERENCES reservation(id) ON DELETE CASCADE,
     CONSTRAINT fk_passenger_ticket
         FOREIGN KEY (passenger) REFERENCES passenger(passport_nr) ON DELETE CASCADE
+);
+
+CREATE TABLE credit_card (
+    card_nr BIGINT,
+    name VARCHAR(64),
+
+    CONSTRAINT pk_credit_card
+        PRIMARY KEY (card_nr)
 );
 
 CREATE TABLE booking (
@@ -159,14 +167,6 @@ CREATE TABLE contact (
         FOREIGN KEY (reservation_id) REFERENCES reservation(id) ON DELETE CASCADE
 );
 
-CREATE TABLE credit_card (
-    card_nr BIGINT,
-    name VARCHAR(64),
-
-    CONSTRAINT pk_credit_card
-        PRIMARY KEY (card_nr)
-);
-
 DROP PROCEDURE IF EXISTS addYear;
 
 DELIMITER //
@@ -186,7 +186,7 @@ END
 DELIMITER //
 CREATE PROCEDURE addDestination(IN code VARCHAR(3), IN name VARCHAR(30), IN country VARCHAR(30))
 BEGIN
-    INSERT INTO day(code, name, country) VALUES (code, name, country);
+    INSERT INTO airport(code, name, country) VALUES (code, name, country);
 END
 // DELIMITER;
 
@@ -205,13 +205,13 @@ DELIMITER //
 CREATE PROCEDURE addFlight(IN departure_code VARCHAR(3), IN arrival_code VARCHAR(3), IN year INT, IN day VARCHAR(10), IN departure_time TIME)
 BEGIN
     DECLARE weekly_schedule_id INT;
-    /*DECLARE route_id INT;*/
+    DECLARE route_id INT;
     DECLARE week INT DEFAULT 1;
     /*SET selected_route_id = SELECT id FROM route WHERE from_airport = departure_code AND to_airport = arrival_code;*/
-    SELECT id AS route_id FROM route WHERE from_airport = departure_code AND to_airport = arrival_code;
+    SELECT id INTO route_id FROM route WHERE from_airport = departure_code AND to_airport = arrival_code;
     INSERT INTO weekly_schedule(day_of_week, departue, route_id, year_nr) VALUES (day, departure_time, route_id, year);
     SET weekly_schedule_id = LAST_INSERT_ID();
-    WHILE week <= 1 DO
+    WHILE week <= 52 DO
         INSERT INTO flight(weekly_flight, week) VALUES (weekly_schedule_id, week);
         SET week = week + 1;
     END WHILE;
@@ -304,11 +304,11 @@ route_id = id_route;
 SELECT id INTO reservation_flight FROM flight WHERE weekly_flight = week_schedule AND flight.week = week;
 SET free_seats = calculateFreeSeats(reservation_flight);
 
-IF free_seats-number_of_passengers >= 0 THEN SET output_reservation_nr = NULL;
+IF free_seats-number_of_passengers <= 0 THEN SET output_reservation_nr = NULL;
 ELSE SET output_reservation_nr = RAND()*((999999999-100000000)+100000000);
+INSERT INTO reservation(id, flight_nr, seat_amount) VALUES (output_reservation_nr, reservation_flight, number_of_passengers);
 END IF;
 
-INSERT INTO reservation(id, flight_nr, seat_amount) VALUES (output_reservation_nr, reservation_flight, 0);
 END
 // DELIMITER;
 
@@ -370,7 +370,8 @@ CREATE VIEW allFlights AS
 (
     SELECT
     (SELECT name FROM airport WHERE code = (SELECT to_airport FROM route WHERE route.id = route_id)) AS destination_city_name,
-    (SELECT name FROM airport WHERE code = (SELECT from_airport FROM route WHERE route.id = route_id)) AS departure_city_name,    
+    (SELECT name FROM airport WHERE code = (SELECT from_airport FROM route WHERE route.id = route_id)) AS departure_city_name,
+    departue AS departure_time,
     day_of_week AS departure_day,
     week AS departure_week,
     year_nr AS departure_year,
@@ -378,3 +379,26 @@ CREATE VIEW allFlights AS
     calculatePrice(flight.id) AS current_price_per_seat
     FROM flight INNER JOIN weekly_schedule ON flight.weekly_flight = weekly_schedule.id
 );
+
+/*
+Question 8 a:
+A simple way to protect the credit card number would be to encrypt it
+
+8 b:
+1. It makes it a lot simpler to update the database since the procedure dependencies are locally stored on the database itself.
+2. Locally stored procedures can improve efficiency when querying the database since validation can be done beforehand.
+3. It is a good practice to have seperation between the client and the database because then the client does not need to know the
+structure of the database.
+
+Question 9b:
+For as long as transaction A isn't commited the reservation doesnt exist for B
+
+9c:
+The reservation cannot be modified since it doesn't exist for B as long as transaction A has not been committed
+
+10a:
+An overbooking did not occur for us we got 19 on both our queries.
+
+10b:
+
+*/
