@@ -173,7 +173,7 @@ DELIMITER //
 CREATE PROCEDURE addYear(IN year INT, IN factor DOUBLE)
 BEGIN
     INSERT INTO year(nr, factor) VALUES (year, factor);
-END 
+END
 // DELIMITER;
 
 DELIMITER //
@@ -186,34 +186,38 @@ END
 DELIMITER //
 CREATE PROCEDURE addDestination(IN code VARCHAR(3), IN name VARCHAR(30), IN country VARCHAR(30))
 BEGIN
-    INSERT INTO airport(code, name, country) VALUES (code, name, country);
+    INSERT INTO airport(airport.code, airport.name, airport.country) VALUES (code, name, country);
 END
 // DELIMITER;
 
 DELIMITER //
-CREATE PROCEDURE addRoute(IN departure_code VARCHAR(3), IN arrival_code VARCHAR(3), IN year INT, IN route_price DOUBLE)
+CREATE PROCEDURE addRoute(IN departure_code VARCHAR(3), IN arrival_code VARCHAR(3), IN year_ INT, IN route_price_ DOUBLE)
 BEGIN
-    DECLARE id INT;
-    INSERT INTO route(to_airport, from_airport) VALUES (arrival_code, departure_code);
-    SET id = LAST_INSERT_ID();
-    INSERT INTO update_price(route_id, year, route_price) VALUES (id, year, route_price);
+DECLARE id_route INT;
+    DECLARE route_exist INT DEFAULT NULL;
+    SELECT id INTO route_exist FROM route WHERE from_airport = departure_code AND to_airport = arrival_code;
+    IF route_exist IS NULL THEN INSERT INTO route(to_airport, from_airport) VALUES (arrival_code, departure_code);
+    SET id_route = LAST_INSERT_ID();
+    ELSE SET id_route = route_exist;
+    END IF;
+    INSERT INTO update_price(route_id, year, route_price) VALUES (id_route, year_, route_price_);
 END
 // DELIMITER;
 
 DROP PROCEDURE addFlight;
 DELIMITER //
-CREATE PROCEDURE addFlight(IN departure_code VARCHAR(3), IN arrival_code VARCHAR(3), IN year INT, IN day VARCHAR(10), IN departure_time TIME)
-BEGIN
+CREATE PROCEDURE addFlight(IN departure_code varchar(3), IN arrival_code varchar(3), IN year_number int, IN day_name varchar(10), IN departure_time time)
+    BEGIN
     DECLARE weekly_schedule_id INT;
-    DECLARE route_id INT;
-    DECLARE week INT DEFAULT 1;
+    DECLARE route_id_ INT;
+    DECLARE week_nr INT DEFAULT 1;
     /*SET selected_route_id = SELECT id FROM route WHERE from_airport = departure_code AND to_airport = arrival_code;*/
-    SELECT id INTO route_id FROM route WHERE from_airport = departure_code AND to_airport = arrival_code;
-    INSERT INTO weekly_schedule(day_of_week, departue, route_id, year_nr) VALUES (day, departure_time, route_id, year);
+    SELECT id INTO route_id_ FROM route WHERE from_airport = departure_code AND to_airport = arrival_code;
+    INSERT INTO weekly_schedule(day_of_week, departue, route_id, year_nr) VALUES (day_name, departure_time, route_id_, year_number);
     SET weekly_schedule_id = LAST_INSERT_ID();
-    WHILE week <= 52 DO
-        INSERT INTO flight(weekly_flight, week) VALUES (weekly_schedule_id, week);
-        SET week = week + 1;
+    WHILE week_nr <= 52 DO
+        INSERT INTO flight(weekly_flight, week) VALUES (weekly_schedule_id, week_nr);
+        SET week_nr = week_nr + 1;
     END WHILE;
 END
 // DELIMITER;
@@ -225,11 +229,9 @@ BEGIN
     DECLARE free_seats INT DEFAULT 40;
     DECLARE booked INT;
     SELECT sum(seat_amount) INTO booked FROM reservation WHERE flight_nr = flightnumber;
-
     IF booked is NULL THEN
         RETURN free_seats;
     END IF;
-
     SET free_seats = free_seats-booked;
     RETURN free_seats;
 END
@@ -239,27 +241,27 @@ DELIMITER //
 CREATE FUNCTION calculatePrice(flightnumber INT) RETURNS DOUBLE
 BEGIN
 
-DECLARE route_price DOUBLE;
+DECLARE route_price_ DOUBLE;
 DECLARE weekday_factor DOUBLE;
 DECLARE booked_passengers INT;
 DECLARE profit_factor DOUBLE;
 DECLARE booking_price DOUBLE;
-
 DECLARE weeklyschedule_id INT;
-DECLARE route_id INT;
+DECLARE route_id_ INT;
 DECLARE flight_weekday VARCHAR(10);
 DECLARE flight_year INT;
 
 SELECT weekly_flight INTO weeklyschedule_id FROM flight WHERE id = flightnumber;
-SELECT weekly_schedule.route_id INTO route_id FROM weekly_schedule WHERE id = weeklyschedule_id;
-SELECT update_price.route_price INTO route_price FROM update_price WHERE update_price.route_id = route_id; 
-
+SELECT route_id INTO route_id_ FROM weekly_schedule WHERE id = weeklyschedule_id;
 SELECT day_of_week, year_nr INTO flight_weekday, flight_year FROM weekly_schedule WHERE id = weeklyschedule_id;
+SELECT route_price INTO route_price_ FROM update_price WHERE route_id = route_id_ AND year = flight_year;
 SELECT factor INTO weekday_factor FROM day WHERE weekday = flight_weekday AND year_nr = flight_year;
 SELECT factor INTO profit_factor FROM year WHERE nr = flight_year;
-SET booked_passengers = 40 - calculateFreeSeats(flightnumber);
 
-SET booking_price = route_price * weekday_factor * (booked_passengers + 1)/40 * profit_factor;
+SET booked_passengers = 40 - calculateFreeSeats(flightnumber);
+SET booking_price = route_price_ * weekday_factor * (booked_passengers + 1)/40 * profit_factor;
+SET booking_price = ROUND(booking_price, 3);
+
 RETURN booking_price;
 
 END
@@ -293,20 +295,23 @@ DECLARE reservation_flight INT;
 DECLARE week_schedule INT;
 DECLARE id_route INT;
 DECLARE free_seats INT;
-
 SELECT id into id_route FROM route WHERE to_airport = arrival_airport AND from_airport = departure_airport;
-SELECT id into week_schedule FROM weekly_schedule WHERE 
+SELECT id into week_schedule FROM weekly_schedule WHERE
 day_of_week = day   AND
 year_nr = year      AND
 departue = time_dep AND
 route_id = id_route;
-
 SELECT id INTO reservation_flight FROM flight WHERE weekly_flight = week_schedule AND flight.week = week;
 SET free_seats = calculateFreeSeats(reservation_flight);
-
 IF free_seats-number_of_passengers <= 0 THEN SET output_reservation_nr = NULL;
 ELSE SET output_reservation_nr = RAND()*((999999999-100000000)+100000000);
+END IF;
+IF output_reservation_nr IS NULL THEN SELECT "Not enough seats" AS "Message";
+ELSE
+    IF reservation_flight IS NULL THEN SELECT "No such flight" AS "Message";
+    ELSE
 INSERT INTO reservation(id, flight_nr, seat_amount) VALUES (output_reservation_nr, reservation_flight, number_of_passengers);
+END IF;
 END IF;
 
 END
@@ -316,11 +321,28 @@ DELIMITER //
 CREATE PROCEDURE addPassenger(
     IN reservation_nr INT,
     IN passport INT,
-    IN name VARCHAR(30)
+    IN name_ VARCHAR(30)
 )
 BEGIN
-INSERT INTO passenger(passport_nr, passenger.name) VALUES (passport, name);
+DECLARE passenger_exist INT DEFAULT NULL;
+DECLARE reservation_exist INT DEFAULT NULL;
+DECLARE payed INT DEFAULT NULL;
+
+SELECT passport_nr INTO passenger_exist FROM passenger WHERE passport_nr = passport;
+IF passenger_exist IS NULL THEN
+    INSERT INTO passenger(passport_nr, passenger.name) VALUES (passport, name_);
+END IF;
+SELECT id INTO reservation_exist FROM reservation WHERE reservation_nr = id;
+IF reservation_exist IS NULL THEN
+    SELECT "No such reservation" AS "Message";
+ELSE
+SELECT reservation_id INTO payed FROM booking WHERE reservation_id = reservation_nr;
+IF payed IS NOT NULL THEN
+    SELECT "Booking already payed" AS "Message";
+ELSE
 UPDATE reservation SET passenger = passport WHERE id = reservation_nr;
+end if;
+END IF;
 END
 // DELIMITER;
 
@@ -328,14 +350,14 @@ DELIMITER //
 CREATE PROCEDURE addContact(
     IN reservation_nr INT,
     IN passport INT,
-    IN email VARCHAR(30),
+    IN email_ VARCHAR(30),
     IN phone BIGINT
 )
 BEGIN
 DECLARE person_in_reser INT DEFAULT 0;
 SELECT passenger INTO person_in_reser FROM reservation WHERE id = reservation_nr AND passenger = passport;
 IF person_in_reser = 0 THEN SELECT "Passenger has no reservation" AS "Message";
-ELSE INSERT INTO contact(contact.email, phone_nr, passenger, reservation_id) VALUES (email, phone, passport, reservation_nr);
+ELSE INSERT INTO contact(email, phone_nr, passenger, reservation_id) VALUES (email_, phone, passport, reservation_nr);
 END IF;
 END
 // DELIMITER;
@@ -347,19 +369,18 @@ CREATE PROCEDURE addPayment(
     IN creditcard_nr BIGINT
 )
 BEGIN
-DECLARE price INT;
+DECLARE price_ INT;
 DECLARE contact_person INT;
 DECLARE flight INT;
 DECLARE seats INT;
-
 SELECT passenger INTO contact_person FROM contact WHERE reservation_id = reservation_nr;
 IF contact_person IS NULL THEN SELECT "Reservation has no contact" AS "Message";
 ELSE
 SELECT flight_nr, seat_amount INTO flight, seats FROM reservation WHERE id = reservation_nr;
 IF calculateFreeSeats(flight) < seats THEN SELECT "Not enough free seats" AS "Message";
-ELSE SET price = seats * calculatePrice(flight);
-INSERT INTO credit_card VALUES (creditcard_nr, cardholder_name);
-INSERT INTO booking VALUES (reservation_nr, creditcard_nr, price);
+ELSE SET price_ = seats * calculatePrice(flight);
+INSERT INTO credit_card(card_nr, name) VALUES (creditcard_nr, cardholder_name);
+INSERT INTO booking(reservation_id, payment_method, price) VALUES (reservation_nr, creditcard_nr, price_);
 END IF;
 END IF;
 END
