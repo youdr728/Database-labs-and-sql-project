@@ -1,4 +1,3 @@
--- Active: 1702038603655@@mariadb.edu.liu.se@3306@matka448
 SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS passenger CASCADE;
 DROP TABLE IF EXISTS contact CASCADE;
@@ -97,26 +96,28 @@ CREATE TABLE flight (
         FOREIGN KEY (weekly_flight) REFERENCES weekly_schedule(id) ON DELETE CASCADE
 );
 
-CREATE TABLE passenger (
-    passport_nr INT,
-    name VARCHAR(30),
 
-    CONSTRAINT pk_passenger
-        PRIMARY KEY (passport_nr)
-);
 
 CREATE TABLE reservation (
     id INT,
     flight_nr INT,
-    passenger INT,
     seat_amount INT,
 
     CONSTRAINT pk_reservation
         PRIMARY KEY (id),
     CONSTRAINT fk_flight_reservation
-        FOREIGN KEY (flight_nr) REFERENCES flight(id) ON DELETE CASCADE,
-    CONSTRAINT fk_passenger_reservation
-        FOREIGN KEY (passenger) REFERENCES passenger(passport_nr) ON DELETE CASCADE
+        FOREIGN KEY (flight_nr) REFERENCES flight(id) ON DELETE CASCADE
+);
+
+CREATE TABLE passenger (
+    passport_nr INT,
+    name VARCHAR(30),
+    reservation_id INT,
+
+    CONSTRAINT pk_passenger
+        PRIMARY KEY (passport_nr),
+    CONSTRAINT fk_reservation
+        FOREIGN KEY (reservation_id) REFERENCES reservation(id) ON DELETE CASCADE
 );
 
 CREATE TABLE ticket (
@@ -267,14 +268,16 @@ RETURN booking_price;
 END
 // DELIMITER;
 
+DROP TRIGGER  gen_ticket_nr;
 DELIMITER //
 CREATE TRIGGER gen_ticket_nr BEFORE INSERT ON ticket
 FOR EACH ROW
 BEGIN
 
-DECLARE ticket_nr INT;
-SET ticket_nr = RAND()*((999999999-100000000)+100000000);
-INSERT INTO ticket(reservation_id, passenger, ticket_nr) VALUES (NEW.reservation_id, NEW.passenger, ticket_nr);
+DECLARE ticket_n INT;
+SET ticket_n = RAND()*((999999999-100000000)+100000000);
+/*INSERT INTO ticket(reservation_id, passenger, ticket_nr) VALUES (NEW.reservation_id, NEW.passenger, ticket_nr);*/
+SET NEW.ticket_nr = ticket_n;
 END
 
 // DELIMITER;
@@ -309,12 +312,11 @@ END IF;
 IF output_reservation_nr IS NULL THEN SELECT "Not enough seats" AS "Message";
 ELSE
     IF reservation_flight IS NULL THEN SELECT "No such flight" AS "Message";
-    ELSE
-INSERT INTO reservation(id, flight_nr, seat_amount) VALUES (output_reservation_nr, reservation_flight, number_of_passengers);
+    ELSE INSERT INTO reservation(id, flight_nr, seat_amount) VALUES (output_reservation_nr, reservation_flight, number_of_passengers);
 END IF;
 END IF;
+END;
 
-END
 // DELIMITER;
 
 DELIMITER //
@@ -327,6 +329,7 @@ BEGIN
 DECLARE passenger_exist INT DEFAULT NULL;
 DECLARE reservation_exist INT DEFAULT NULL;
 DECLARE payed INT DEFAULT NULL;
+DECLARE p_has_reserv INT DEFAULT NULL;
 
 SELECT passport_nr INTO passenger_exist FROM passenger WHERE passport_nr = passport;
 IF passenger_exist IS NULL THEN
@@ -340,10 +343,19 @@ SELECT reservation_id INTO payed FROM booking WHERE reservation_id = reservation
 IF payed IS NOT NULL THEN
     SELECT "Booking already payed" AS "Message";
 ELSE
-UPDATE reservation SET passenger = passport WHERE id = reservation_nr;
+SELECT passenger.reservation_id INTO p_has_reserv from passenger WHERE passport_nr = passport;
+IF p_has_reserv IS NOT NULL THEN
+    SELECT "Passenger aleady has reservation" AS "Message";
+
+ELSE
+ UPDATE passenger SET reservation_id = reservation_nr WHERE passport_nr = passport;
+ UPDATE reservation SET seat_amount = seat_amount+1 WHERE id = reservation_nr;
+
+END IF;
 end if;
 END IF;
-END
+END;
+
 // DELIMITER;
 
 DELIMITER //
@@ -354,20 +366,15 @@ CREATE PROCEDURE addContact(
     IN phone BIGINT
 )
 BEGIN
-DECLARE person_in_reser INT DEFAULT 0;
-SELECT passenger INTO person_in_reser FROM reservation WHERE id = reservation_nr AND passenger = passport;
-IF person_in_reser = 0 THEN SELECT "Passenger has no reservation" AS "Message";
-ELSE INSERT INTO contact(email, phone_nr, passenger, reservation_id) VALUES (email_, phone, passport, reservation_nr);
+DECLARE p INT DEFAULT NULL;
+SELECT passport_nr INTO p FROM passenger WHERE reservation_id = reservation_nr AND passport_nr = passport;
+IF p IS NULL THEN SELECT "Passenger has no reservation" AS "Message";
+ELSE INSERT INTO contact(contact.email, contact.phone_nr, contact.passenger, contact.reservation_id) VALUES (email_, phone, passport, reservation_nr);
 END IF;
-END
+END;
 // DELIMITER;
 
 DELIMITER //
-CREATE PROCEDURE addPayment(
-    IN reservation_nr INT,
-    IN cardholder_name VARCHAR(64),
-    IN creditcard_nr BIGINT
-)
 BEGIN
 DECLARE price_ INT;
 DECLARE contact_person INT;
@@ -378,12 +385,14 @@ IF contact_person IS NULL THEN SELECT "Reservation has no contact" AS "Message";
 ELSE
 SELECT flight_nr, seat_amount INTO flight, seats FROM reservation WHERE id = reservation_nr;
 IF calculateFreeSeats(flight) < seats THEN SELECT "Not enough free seats" AS "Message";
+DELETE FROM reservation WHERE id = reservation_nr;
 ELSE SET price_ = seats * calculatePrice(flight);
 INSERT INTO credit_card(card_nr, name) VALUES (creditcard_nr, cardholder_name);
 INSERT INTO booking(reservation_id, payment_method, price) VALUES (reservation_nr, creditcard_nr, price_);
+INSERT INTO ticket(reservation_id, passenger) VALUES (reservation_nr, contact_person);
 END IF;
 END IF;
-END
+END;
 // DELIMITER;
 
 DROP VIEW IF EXISTS allFlights;
@@ -418,8 +427,52 @@ For as long as transaction A isn't commited the reservation doesnt exist for B
 The reservation cannot be modified since it doesn't exist for B as long as transaction A has not been committed
 
 10a:
-An overbooking did not occur for us we got 19 on both our queries.
+An overbooking did not occur for us we got 19 on both our queries. This might be because it is hard to make the conurrency accurate.
+Since we are starting the transactions seperatly it doesnt run "exactly" concurrently
 
 10b:
+An overbooking is indeed possible. Since we check if the seats are enough in our addPayment method we can get an okay depending on how many passengers
+have been added by the other transaction. If this line happens in one transaction and runs while the other is still add passengers its possible
+to get overbookking. (Sorry if we explained it poorly but we did our best)
 
+10c:
+We have tried our best to make overbooking occurr but we have not managed to find the right timing. The reason is the same as in 10a. Since
+we are running the transactions in seperate terminals on our device, its hard to get the timing right in the transactions. We can of course add
+sleeps in our transactions but this does not hinder the human factor in us deciding when the transaction start by running the script
+
+10d: The simplest (although not most effective) way is to lock all of the tables that are read/written to before and after the addPayment method.
+In the code it would look as follows:
+
+LOCK TABLES
+    (tables that are written to) write,
+    (tables that are read form) read;
+CALL addPayment()
+UNLOCK TABLES;
+
+
+
+For the secondary index we feel like the flight table would be an appropriate candidate. Since we often access the table via values 
+other than the primary key. Since flight is a table with many values and often accesed via the weekly_schedule id or just the week number
+there is potential for an implementation of a secondary index. 
+
+If we create a secondary index for the flight table we first have to decide the block size. This size is pretty much arbitrary as long as it is smalle than 52.
+Since the week value will havve many repeated values we use the repeating field with pointers method. This means that each value in the index table has multiple pointers
+that cover every entry of the value in the data blocks.
+
+So it could look something like this
+
+Index File:
+Week
+1, (pointers to data) Ex: Block 1, Block 3, Block 4
+2, (pointers to data)
+3, (pointers to data)
+4, (pointers to data)
+5, (pointers to data)
+
+Block 1:
+Flight_nr1, weekly_flight1, week1
+Flight_nr2, weekly_flight2, week2
+Flight_nr2, weekly_flight2, week2
+
+Here the first entry og the index file would point to every block in the data files that contains the week 1.
 */
