@@ -375,6 +375,11 @@ END;
 // DELIMITER;
 
 DELIMITER //
+CREATE PROCEDURE addPayment(
+    IN reservation_nr INT,
+    IN cardholder_name VARCHAR(64),
+    IN creditcard_nr BIGINT
+)
 BEGIN
 DECLARE price_ INT;
 DECLARE contact_person INT;
